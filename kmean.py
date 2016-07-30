@@ -4,7 +4,7 @@ Created on Wed Jul 27 21:04:06 2016
 
 @author: Jeffrey
 """
-def printList(circleList):
+def findAvarages(circleList):
     #circleList
     if (len(circleList)<1):
         return (0,0,0)
@@ -22,10 +22,9 @@ def printList(circleList):
         for i in range(0, iterations):
             #print "count= " + str(i)
             if(count1+count2 == 0):  #first pass
-                print "dose this run"
                 circleNum=0
                 tempCircle=circleList[0]
-                center1 = (tempCircle[0]/2 ,tempCircle[1]/2, tempCircle[2])
+                center1 = (tempCircle[0] ,tempCircle[1], tempCircle[2])
                 center2= (tempCircle[0], tempCircle[1], tempCircle[2])
             else:
                 circleNum= circleNum+1

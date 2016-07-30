@@ -9,7 +9,7 @@ import kmean
 fx = 843
 obj_width = 0.305 #meters
 
-def houghTransform(image):
+def getBalls(image):
     #Apply the Hough Transform to find the circles
     circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,3 , 8) #2.3 is tp be screwed 2.5 is good
     
@@ -35,7 +35,6 @@ def houghTransform(image):
 
         count =0 
         for (x, y, r) in circles:
-            print x, y, r
             #get aravage circle
             count = count+1            
             Sum_x= Sum_x +x #((ax*count)+x)/(count+1)
@@ -54,33 +53,41 @@ def houghTransform(image):
             cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
             
         ax = Sum_x/count
-        centeredCircles = kmean.printList(circles)
+        centeredCircles = kmean.findAvarages(circles)
         centerCirc1= centeredCircles[0]
         centerCirc2= centeredCircles[1]
         radSum =(centerCirc1[2])+(centerCirc2[2])
         distBetween= kmean.getDistBetween(centerCirc1, centerCirc2)
+        
         print "total radious = " + str(radSum)
         print "distance between = " + str(distBetween)
         if ( (distBetween - radSum) <0 ): # determins is if there is overlap of the 2 circles
             print "1 ball detected"
             ay = Sum_y/count
             ar = Sum_r/count
+            
+            #print the average circle
             cv2.circle(output, (ax, ay), ar, (239, 239, 239), 4)
             cv2.rectangle(output, (ax -5, ay -5), (ax+ 5, ay+5), (239, 239, 239), -1)
             
+            #return the single average circle            
+            final_circles = ((ax,ay,ar),)
+            
         else:
             print "2 balls detected"
+            
+            #print both circles
             cv2.circle(output, (centerCirc2[0], centerCirc2[1]), centerCirc2[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc2[0] - 5, centerCirc2[1] - 5), (centerCirc2[0] + 5, centerCirc2[1] + 5), (239, 239, 239), -1)
             cv2.circle(output, (centerCirc1[0], centerCirc1[1]), centerCirc1[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc1[0] - 5, centerCirc1[1] - 5), (centerCirc1[0] + 5, centerCirc1[1] + 5), (239, 239, 239), -1)            
             
-            
-        print count
+            #return the two circles            
+            final_circles = ((centerCirc1[0], centerCirc1[1],centerCirc1[2]),(centerCirc2[0], centerCirc2[1],centerCirc2[2]))
         
         # show the output image
         InputOutput.display_image(np.hstack([image, output]),"houghTransform")
-        return circles
+        return final_circles
 
 #Convert the image from a color image to a thresholded image
 def thresholdRed(image):
