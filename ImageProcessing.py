@@ -95,7 +95,7 @@ def thresholdRed(image):
     #maxGBR= (176, 255, 255)
     #minGBR= (0, 0, 0)
     #maxGBR= (176, 255, 255)
-    lowerRedHSV = (0, 80, 90)
+    lowerRedHSV = (0, 80, 50)
     upperRedHSV= (15, 255, 255)
     mask2 =cv2.inRange(image, lowerRedHSV, upperRedHSV)
     

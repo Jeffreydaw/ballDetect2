@@ -10,7 +10,7 @@ def printList(circleList):
         return (0,0,0)
     else:
         print "______kmean is runing________"
-        iterations = 200
+        iterations = 20
         ##TODO:  genreate a ranom number
         center1 = (100 ,100, 30)
         center2 =  (300, 300, 30)
@@ -21,11 +21,12 @@ def printList(circleList):
         #print "center1= " + str(center1[1])
         for i in range(0, iterations):
             #print "count= " + str(i)
-            if(count1+count2 == (0, 0)):  #first pass
+            if(count1+count2 == 0):  #first pass
+                print "dose this run"
                 circleNum=0
                 tempCircle=circleList[0]
-                center1 = (100 ,100, tempCircle[3])
-                center2= (300, 300, tempCircle[3])
+                center1 = (tempCircle[0]/2 ,tempCircle[1]/2, tempCircle[2])
+                center2= (tempCircle[0], tempCircle[1], tempCircle[2])
             else:
                 circleNum= circleNum+1
             for i in range(0, len(circleList)):
