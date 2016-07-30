@@ -57,20 +57,25 @@ def houghTransform(image):
         centeredCircles = kmean.printList(circles)
         centerCirc1= centeredCircles[0]
         centerCirc2= centeredCircles[1]
-        if kmean.getDistBetween(centerCirc1, centerCirc2)< ((centerCirc1[2]/2)+(centerCirc2[2]/2)): # determins is if there is overlap of the 2 circles
+        radSum =(centerCirc1[2])+(centerCirc2[2])
+        distBetween= kmean.getDistBetween(centerCirc1, centerCirc2)
+        print "total radious = " + str(radSum)
+        print "distance between = " + str(distBetween)
+        if ( (distBetween - radSum) <0 ): # determins is if there is overlap of the 2 circles
             print "1 ball detected"
+            ay = Sum_y/count
+            ar = Sum_r/count
+            cv2.circle(output, (ax, ay), ar, (239, 239, 239), 4)
+            cv2.rectangle(output, (ax -5, ay -5), (ax+ 5, ay+5), (239, 239, 239), -1)
+            
+        else:
+            print "2 balls detected"
             cv2.circle(output, (centerCirc2[0], centerCirc2[1]), centerCirc2[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc2[0] - 5, centerCirc2[1] - 5), (centerCirc2[0] + 5, centerCirc2[1] + 5), (239, 239, 239), -1)
             cv2.circle(output, (centerCirc1[0], centerCirc1[1]), centerCirc1[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc1[0] - 5, centerCirc1[1] - 5), (centerCirc1[0] + 5, centerCirc1[1] + 5), (239, 239, 239), -1)            
             
             
-        else:
-            print "2 balls detected"
-            ay = Sum_y/count
-            ar = Sum_r/count
-            cv2.circle(output, (ax, ay), ar, (239, 239, 239), 4)
-            cv2.rectangle(output, (ax -5, ay -5), (ax+ 5, ay+5), (239, 239, 239), -1)
         print count
         
         # show the output image
