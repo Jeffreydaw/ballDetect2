@@ -6,7 +6,7 @@ Created on Wed Jul 27 14:39:20 2016
 """
 
 import InputOutput 
-import ImageProcessing
+import ImageProcessing 
 import cv2
 import math
 import sys    
@@ -14,12 +14,11 @@ import sys
 fx = 843
 obj_width = 0.305 #meters
 
-def get_distance_to_camera(width):
-    return (obj_width * fx) / width
-
 if __name__ == '__main__':
-    
-    correct_circles = (('154cmcenteredBallOnly.jpg',((520,312,100),)),('258cmCenter.jpg',((519,308,106),)), ('375cm.jpg',((520,312,100),)))#('OnWater.jpg',((520,312,100),)),('OnWater1.jpg',((731,416,106),)),
+      
+    correct_circles = (('OnWater1.jpg',((520,312,100),)),('OnWater3.jpg',((731,416,106),))
+        ,('PH2RedBalls.jpg',((519,308,106),(1534,312,106))),('webcamVid1.jpg',((483,413,151),)))
+    #correct_c    ircles = (('webcamVid1.jpg',((483,413,151),)),)
     circle_comparisons = []
     num_balls = 0 
     for file_name,measur_circle in correct_circles:
@@ -34,10 +33,12 @@ if __name__ == '__main__':
  
         thresh = ImageProcessing.thresholdRed(image_hsv)
         InputOutput.display_image(thresh,"Thresholded")
-        thresh = ImageProcessing.removeNoise(thresh)    
-    
-        calc_circles = ImageProcessing.getBalls(thresh)
-        #calc_circles = ImageProcessing.blob_circle_detection(thresh) 
+        thresh = ImageProcessing.removeNoise(thresh)
+        
+        ImageProcessing.reflectionDetection(thresh)
+        
+        calc_circles = ImageProcessing.getBalls(thresh,4)
+        #calc_circles = ImageProcessing.blob_circle_detection(thresh)
         if calc_circles == None:
             calc_circles = []
         #calc_circles = ImageProcessing.get_blob_centroid(image, thresh, 5)
@@ -52,14 +53,13 @@ if __name__ == '__main__':
         print ("file: " + file_name)
         print ("# of Balls in image: " + str(len(measur_circle)))
         print ("# of Balls detected: " + str(len(calc_circles)))  
-        
+         
         #Figure out which 
         for calc_x,calc_y,calc_radis in calc_circles:
             #search for most similar circle
             #setup inital values for first run
             closest_x,closest_y,closest_radius = -10000,-10000,-100000
             closest_distance = 1000000
-            print "measur_circle = " + str(measur_circle)
             for measur_x,measur_y,measur_radius in measur_circle:
                 distanceToCenter = math.sqrt(math.pow((calc_x-measur_x),2)+math.pow((calc_y-measur_y),2))
                 if(closest_distance>distanceToCenter):
@@ -74,13 +74,13 @@ if __name__ == '__main__':
             print (closest_x, closest_y, closest_radius
                 , "-> " , calc_x , calc_y, calc_radis)
     
-    #Print Summary Statistics
+    #Print Summary Statistics    
     num_balls_detected = len(circle_comparisons)  
     
     if(num_balls_detected == 0):
         print "No balls detected"
         sys.exit()
-    
+     
     #Get average error
     total_xy_error = 0
     total_radius_error = 0

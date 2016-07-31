@@ -11,13 +11,18 @@ import numpy as np
 
 display_images = True
 supress_warnings = False
+display_everything = False
+
+#list of images you want displayed
+#displayList = ("Starting Image","Thresholded","houghTransform","Result!","GoToTop","Show Bottom")
+displayList = ("houghTransform","Result!",)
 
 max_width = 1500
 max_height = 1200
 
 #For test purposes
 def display_image(img,title):
-    if display_images:
+    if display_images and (display_everything or title in displayList):
         shape = img.shape
         if shape[0] > max_width or shape[1]>max_height:
             cv2.namedWindow(title,cv2.WINDOW_NORMAL)
@@ -42,7 +47,6 @@ def get_image(fileName):
     else:
         height, width, channels = image.shape
         return image
-
 
     
 def printWarning(warning):

@@ -52,11 +52,8 @@ def findAvarages(circleList):
                     #C2Center.Lat =  (C2Center.Lat*count2 + GPSNode.GetGPSValLat())/(count2+1)
                     #C2Center.Lon =  (C2Center.Lon*count2 + GPSNode.GetGPSValLon())/(count2+1)
                     count2 =count2+1
-                
-            print "why do I need this line"
         #print "center1: " + center1 + " & Center2: " + center2 
         kCenter = (center1, center2)
-        print "kcenter: " + str(kCenter)
         return kCenter #(center1, center2)
      
 def nearestPoint(point, point1, point2):
