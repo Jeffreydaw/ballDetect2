@@ -19,10 +19,9 @@ def get_distance_to_camera(width):
 
 if __name__ == '__main__':
     
-    correct_circles = (('OnWater.jpg',((520,312,100),)),('OnWater1.jpg',((731,416,106),))
-        ,('PH2RedBalls.jpg',((519,308,106),(1534,312,106))))
+    correct_circles = (('154cmcenteredBallOnly.jpg',((520,312,100),)),('258cmCenter.jpg',((519,308,106),)), ('375cm.jpg',((520,312,100),)))#('OnWater.jpg',((520,312,100),)),('OnWater1.jpg',((731,416,106),)),
     circle_comparisons = []
-    num_balls = 0
+    num_balls = 0 
     for file_name,measur_circle in correct_circles:
         #Keep track of the number of balls measured
         num_balls+= len(measur_circle)   
@@ -60,6 +59,7 @@ if __name__ == '__main__':
             #setup inital values for first run
             closest_x,closest_y,closest_radius = -10000,-10000,-100000
             closest_distance = 1000000
+            print "measur_circle = " + str(measur_circle)
             for measur_x,measur_y,measur_radius in measur_circle:
                 distanceToCenter = math.sqrt(math.pow((calc_x-measur_x),2)+math.pow((calc_y-measur_y),2))
                 if(closest_distance>distanceToCenter):

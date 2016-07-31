@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import InputOutput
 import kmean
+import loactionDetection
 
 #fx = 517 * 0.5 # focal length is calculated for 320x240
 fx = 843
@@ -11,7 +12,7 @@ obj_width = 0.305 #meters
 
 def getBalls(image):
     #Apply the Hough Transform to find the circles
-    circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,3 , 8) #2.3 is tp be screwed 2.5 is good
+    circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,15 , 1) #2.3 is tp be screwed 2.5 is good
     
     #/// Apply the Hough Transform to find the circles
     if (circles is None):
@@ -52,7 +53,7 @@ def getBalls(image):
             cv2.circle(output, (x, y), r, (120, 255, 0), 4)
             cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
             
-        ax = Sum_x/count
+        
         centeredCircles = kmean.findAvarages(circles)
         centerCirc1= centeredCircles[0]
         centerCirc2= centeredCircles[1]
@@ -63,13 +64,15 @@ def getBalls(image):
         print "distance between = " + str(distBetween)
         if ( (distBetween - radSum) <0 ): # determins is if there is overlap of the 2 circles
             print "1 ball detected"
+            ax = Sum_x/count
             ay = Sum_y/count
             ar = Sum_r/count
+            circ = (ax, ay, ar)
             
             #print the average circle
             cv2.circle(output, (ax, ay), ar, (239, 239, 239), 4)
             cv2.rectangle(output, (ax -5, ay -5), (ax+ 5, ay+5), (239, 239, 239), -1)
-            
+            loactionDetection.getDistance(circ)
             #return the single average circle            
             final_circles = ((ax,ay,ar),)
             
@@ -80,7 +83,8 @@ def getBalls(image):
             cv2.circle(output, (centerCirc2[0], centerCirc2[1]), centerCirc2[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc2[0] - 5, centerCirc2[1] - 5), (centerCirc2[0] + 5, centerCirc2[1] + 5), (239, 239, 239), -1)
             cv2.circle(output, (centerCirc1[0], centerCirc1[1]), centerCirc1[2], (239, 239, 239), 4)
-            cv2.rectangle(output, (centerCirc1[0] - 5, centerCirc1[1] - 5), (centerCirc1[0] + 5, centerCirc1[1] + 5), (239, 239, 239), -1)            
+            cv2.rectangle(output, (centerCirc1[0] - 5, centerCirc1[1] - 5), (centerCirc1[0] + 5, centerCirc1[1] + 5), (239, 239, 239), -1)   
+            temp = loactionDetection.getDistance2balls(centerCirc1, centerCirc2)
             
             #return the two circles            
             final_circles = ((centerCirc1[0], centerCirc1[1],centerCirc1[2]),(centerCirc2[0], centerCirc2[1],centerCirc2[2]))
@@ -102,11 +106,11 @@ def thresholdRed(image):
     #maxGBR= (176, 255, 255)
     #minGBR= (0, 0, 0)
     #maxGBR= (176, 255, 255)
-    lowerRedHSV = (0, 80, 50)
-    upperRedHSV= (15, 255, 255)
+    lowerRedHSV = (0, 0, 0)
+    upperRedHSV= (50, 255, 255)
     mask2 =cv2.inRange(image, lowerRedHSV, upperRedHSV)
     
-    lower_red = (170, 80, 90)
+    lower_red = (120, 40, 20)
     upper_red = (180, 255, 255)
     mask1 = cv2.inRange(image, lower_red, upper_red)
     totalMask = mask1 + mask2
@@ -124,14 +128,15 @@ def thresholdRed(image):
     
 #Removes any red noise picked up in image
 def removeNoise(image):
-    kernel = np.ones((1,12),np.uint8)
+    #kernel = np.ones((9,9),np.uint8)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
     # opening
-    image = cv2.erode(image,kernel,iterations = 2)
-    image = cv2.dilate(image,kernel,iterations = 4)
+    image = cv2.erode(image,kernel,iterations = 1)
+    image = cv2.dilate(image,kernel,iterations = 1)
 
     # closing
-    image = cv2.dilate(image,kernel,iterations =4)
-    image = cv2.erode(image,kernel,iterations = 2)
+    image = cv2.dilate(image,kernel,iterations =1)
+    image = cv2.erode(image,kernel,iterations = 1)
     """
     image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
