@@ -11,6 +11,19 @@ fx = 843
 obj_width = 0.305 #meters
 BLACK = 0
 WHITE = 255
+"""
+*checkes to see if the ball is in the image
+*returns fase if the ball is not in the image
+"""
+def inImage(image, x, y, r):
+    dimator = 2*r
+    height, width = image.shape 
+    if ((dimator  > height) or  (dimator > width)):
+        return False
+    elif (((x-r) < 0) or ((y-r) <0) or ((y+r) > height) or ((x +r) >width)):
+      return False
+    else:
+        return True
 
 #Attempts to remove reflections o the balls off the water
 #returns the image with any felections found removed
@@ -111,7 +124,7 @@ def stepDown(image,x,y,direction,max_step_size):
     
 def getBalls(image,sensitivity):
     #Apply the Hough Transform to find the circles
-    circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,3 , sensitivity) #2.3 is tp be screwed 2.5 is good
+    circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,2.3, sensitivity) #2.3 is tp be screwed 2.5 is good
     
     #/// Apply the Hough Transform to find the circles
     if (circles is None):
@@ -136,24 +149,26 @@ def getBalls(image,sensitivity):
         count =0 
         for (x, y, r) in circles:
             #get aravage circle
-            count = count+1            
-            Sum_x= Sum_x +x #((ax*count)+x)/(count+1)
-            Sum_y= Sum_y +y #((ay*count)+y)/(count+1)
-            Sum_r= Sum_r + r #((ar*count)+r)/(count+1)
-            #avaragedCircle=
-            
-            circlexList.append(x)
-            circleyList.append(y)
-            circlerList.append(r)
-            circleList.append(circles)
-            # draw the circle in the output image, then draw a rectangle
-            # corresponding to the center of the circle
-            
-            cv2.circle(output, (x, y), r, (120, 255, 0), 4)
-            cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+            if inImage(output, x, y, r):           
+                count = count+1            
+                Sum_x= Sum_x +x #((ax*count)+x)/(count+1)
+                Sum_y= Sum_y +y #((ay*count)+y)/(count+1)
+                Sum_r= Sum_r + r #((ar*count)+r)/(count+1)
+                #avaragedCircle=
+                
+                circlexList.append(x)
+                circleyList.append(y)
+                circlerList.append(r)
+                tempCirc = (x, y, r)
+                circleList.append(tempCirc)
+                # draw the circle in the output image, then draw a rectangle
+                # corresponding to the center of the circle
+                
+                cv2.circle(output, (x, y), r, (120, 255, 0), 4)
+                cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
             
         
-        centeredCircles = kmean.findAvarages(circles)
+        centeredCircles = kmean.findAvarages(circleList)
         centerCirc1= centeredCircles[0]
         centerCirc2= centeredCircles[1]
         radSum =(centerCirc1[2])+(centerCirc2[2])
@@ -185,7 +200,7 @@ def getBalls(image,sensitivity):
             cv2.circle(output, (centerCirc1[0], centerCirc1[1]), centerCirc1[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc1[0] - 5, centerCirc1[1] - 5), (centerCirc1[0] + 5, centerCirc1[1] + 5), (239, 239, 239), -1)   
             temp = locationDetection.getDistance2balls(centerCirc1, centerCirc2)
-            locationDetection.getDeg(centerCirc1, centerCirc2)
+            locationDetection.getDeg2Circs(centerCirc1, centerCirc2)
             
             #return the two circles            
             final_circles = ((centerCirc1[0], centerCirc1[1],centerCirc1[2]),(centerCirc2[0], centerCirc2[1],centerCirc2[2]))
