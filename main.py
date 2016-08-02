@@ -15,10 +15,11 @@ fx = 843
 obj_width = 0.305 #meters
 
 if __name__ == '__main__':
-      
-    correct_circles = (('red-boat.jpg',((520,312,100),)),('OnWater3.jpg',((731,416,106),))
+    
+    correct_circles = (('OnWater1.jpg',((520,312,100),)),('OnWater3.jpg',((731,416,106),))
         ,('PH2RedBalls.jpg',((519,308,106),(1534,312,106))),('webcamVid1.jpg',((483,413,151),)))
-    #correct_c    ircles = (('webcamVid1.jpg',((483,413,151),)),)
+    #correct_circles = (('PH2RedBalls.jpg',((519,308,106),(1534,312,106))),)
+    #correct_circles = (('webcamVid1.jpg',((483,413,151),)),)
     circle_comparisons = []
     num_balls = 0 
     for file_name,measur_circle in correct_circles:
@@ -27,7 +28,7 @@ if __name__ == '__main__':
         
         image = InputOutput.get_image(file_name)
         InputOutput.display_image(image,"Starting Image")
-
+ 
         image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert to HSV for thresholding
         image_hsv = cv2.blur(image_hsv, (9,9)) # blur to reduce noise
  
@@ -35,10 +36,9 @@ if __name__ == '__main__':
         InputOutput.display_image(thresh,"Thresholded")
         thresh = ImageProcessing.removeNoise(thresh)
         
-        ImageProcessing.reflectionDetection(thresh)
+        calc_circles = ImageProcessing.reflectionDetection(thresh)
         
-        calc_circles = ImageProcessing.getBalls(thresh,4)
-        #calc_circles = ImageProcessing.blob_circle_detection(thresh)
+        #calc_circles = ImageProcessing.getBalls(thresh,4)
         if calc_circles == None:
             calc_circles = []
         #calc_circles = ImageProcessing.get_blob_centroid(image, thresh, 5)
@@ -49,12 +49,12 @@ if __name__ == '__main__':
         #red ball's measured circle.
         
         #Print basic file facts
-        print ("")
         print ("file: " + file_name)
         print ("# of Balls in image: " + str(len(measur_circle)))
         print ("# of Balls detected: " + str(len(calc_circles)))  
          
         #Figure out which 
+        print ("")
         for calc_x,calc_y,calc_radis in calc_circles:
             #search for most similar circle
             #setup inital values for first run
@@ -83,11 +83,11 @@ if __name__ == '__main__':
      
     #Get average error
     total_xy_error = 0
-    total_radius_error = 0 
+    total_radius_error = 0
     for measured_x, measured_y, measured_radius, calc_x, calc_y, calc_radius in circle_comparisons:
         total_xy_error = total_xy_error + math.sqrt(math.pow((calc_x-measured_x),2)+math.pow((calc_y-measured_y),2))
         total_radius_error = total_radius_error + abs(measured_radius-calc_radius)
-    
+     
     avg_xy_error = total_xy_error/num_balls_detected
     avg_radius_error = total_radius_error/num_balls_detected
     
@@ -110,3 +110,4 @@ if __name__ == '__main__':
     print "Average radius error: " + str(avg_radius_error)
     print str(num_unique_detections) + " of " + str(num_balls) + " balls detected"
     print str(num_balls_detected-num_unique_detections) + " of " + str(num_balls_detected) + " balls detections were duplicate detections"
+     

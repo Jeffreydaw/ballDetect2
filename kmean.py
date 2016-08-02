@@ -9,7 +9,7 @@ def findAvarages(circleList):
     if (len(circleList)<1):
         return (0,0,0)
     else:
-        print "______kmean is runing________"
+        #print "______kmean is runing________"
         iterations = 20
         ##TODO:  genreate a ranom number
         center1 = (100 ,100, 30)
@@ -37,7 +37,7 @@ def findAvarages(circleList):
                 #print "tempTuple= " + str(tempTuple)
                 tempTuple = (tempCircle[0], tempCircle[1])
                 #print "tempTuple= " + str(tempTuple)
-                if(nearestPoint(tempTuple, center1, center2)== center1):                                
+                if(nearestPoint(tempTuple, center1, center2)== center1):
                     if count1 ==0:
                         center1 =  ((center1[0]*count1 + tempCircle[0])/(count1+1), (center1[1]*count1 + tempCircle[1])/(count1+1), (center1[2]*count1 + tempCircle[2])/(count1+1))
                     else:

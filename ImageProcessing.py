@@ -11,6 +11,7 @@ fx = 843
 obj_width = 0.305 #meters
 BLACK = 0
 WHITE = 255
+
 """
 *checkes to see if the ball is in the image
 *returns fase if the ball is not in the image
@@ -29,23 +30,52 @@ def inImage(image, x, y, r):
 #returns the image with any felections found removed
 def reflectionDetection(image):
     #first find any ball candidates.
-    sensitivity = 10
+    sensitivity = 2.7
     initial_ball_locs = getBalls(image,sensitivity)
+    
+    circles = [] #the list of found circles
     if not initial_ball_locs == None:
         for candidate_loc in initial_ball_locs:
             clean_image = image.copy()
             top=goToTop(candidate_loc[0],candidate_loc[1],image)
-            print "TOP: " + str(top)
             
             #Setup x and y trackers for left and right
             x_left = top[0]
             y_left = top[1]
             x_right = top[0]
             y_right = top[1]
+            
+            #Setup tracking positions for reflection detection
+            left_farthest = (x_left,y_left)
+            right_farthest = (x_right,y_right)
+            
+            left_close_pos = (x_left,y_left)
+            right_close_pos = (x_right,y_right)
+            #constants
+            max_step_size = 25
+            min_percent_decline = .1
+            
             while(True):
-                leftPos = stepDown(image,x_left,y_left,1,15)
-                rightPos = stepDown(image,x_right,y_right,-1,15)
+                #the middle x is tracked to allow the left and right trackers to travel farther
+                #If a sharp drop off is tracked towards the center the left or right will keep
+                #searching until the middle point
+                middle_x = (right_farthest[0] + left_farthest[0])/2
+                
+                #Move one step downward along the edge of the object. 
+                leftPos = stepDown(image,x_left,y_left,-1,middle_x,max_step_size)
+                rightPos = stepDown(image,x_right,y_right,1,middle_x,max_step_size)
+                
                 if(leftPos != None and rightPos != None):
+                    #Check if both left and right are below their max position this we are on the downslope 
+                    # of the circle no reason to continue
+                    left_declining = (leftPos[0] - left_farthest[0]>(middle_x-left_farthest[0])*(min_percent_decline))
+                    right_declining = (right_farthest[0]-leftPos[0]>(middle_x-right_farthest[0])*(min_percent_decline))
+                    
+                    if(left_declining and right_declining):
+                        break
+                    
+                    left_farthest,right_farthest,left_close_pos,right_close_pos = \
+                        updateMinMax(leftPos,rightPos,left_farthest,right_farthest,left_close_pos,right_close_pos)
                     x_left = leftPos[0]
                     y_left = leftPos[1]
                     x_right = rightPos[0]
@@ -53,29 +83,53 @@ def reflectionDetection(image):
                     cv2.rectangle(clean_image, (x_left - 2, y_left - 2), (x_left + 2, y_left + 2), 190, -1)
                     cv2.rectangle(clean_image, (x_right - 2, y_right - 2), (x_right + 2, y_right + 2), 190, -1)
                 else:
-                    cv2.rectangle(clean_image, (x_left - 2, y_left - 2), (x_left + 2, y_left + 2), 85, -1)
-                    cv2.rectangle(clean_image, (x_right - 2, y_right - 2), (x_right + 2, y_right + 2), 85, -1)
-                    InputOutput.display_image(clean_image,"Show Bottom")
                     break
-    return image
+            #Display image
+            cv2.rectangle(clean_image, (x_left - 2, y_left - 2), (x_left + 2, y_left + 2), 85, -1)
+            cv2.rectangle(clean_image, (x_right - 2, y_right - 2), (x_right + 2, y_right + 2), 85, -1)
+            InputOutput.display_image(clean_image,"Show Bottom")
+            
+            circleX = (right_farthest[0] + left_farthest[0])/2
+            circleY = (right_farthest[1] + left_farthest[1])/2
+            circle_radius = (right_farthest[0] - left_farthest[0])/2
+            circles.append((circleX,circleY,circle_radius))
     
-def findReflection(image):
-    32
+    print "Output Circles: " + str(circles)
+    print "Initial Ball Locations: " + str(initial_ball_locs)
+    return circles
+
+#updates the min and max positions as required
+def updateMinMax(leftPos,rightPos,left_farthest,right_farthest,left_close_pos,right_close_pos):
+    if(leftPos[0]<left_farthest[0]):
+        left_farthest = leftPos
+    elif(leftPos[0]>left_close_pos[0]):
+        left_close_pos = leftPos
+    
+    if(rightPos[0]>right_farthest[0]):
+        right_farthest = rightPos
+    elif(rightPos[0]<right_close_pos[0]):
+        right_close_pos = rightPos
+        
+    return (left_farthest,right_farthest,left_close_pos,right_close_pos)
+        
 
 #Finds the top of an object given a location in that image
 def goToTop(x,y,image):
-    width = image.shape[0]
+    width = image.shape[1]
     
     #store original value for display
     x1=x
     y1=y
+    
     #Check x and y are within bounds
-    if(x>=width or y>= image.shape[1]):
-        
+    if(x>=width or y>= image.shape[0]):
         cv2.rectangle(image, (x - 2, y - 2), (x + 2, y + 2), 175, -1)
         InputOutput.display_image(image,"GoToTop")
-        InputOutput.printWarning("goToTop given invalid x,y.")
+        InputOutput.printWarning("goToTop given invalid x,y: " + str((x,y)) + " - Dimensions: " + str(image.shape))
         return (x,y)
+    else:
+        print "GoToTop given valid x,y: " + str((x1,y1))
+    
     
     #move up until black is found
     maxSearchRadius = 3
@@ -88,18 +142,18 @@ def goToTop(x,y,image):
         return (x,y)
         
     while(searchRadius<maxSearchRadius and y>0 and x+searchRadius<width and x-searchRadius>0):
-        if image[y-1,x+searchRadius] == WHITE:
+        if image[y-1,x+searchRadius] != BLACK:
             x=x+searchRadius
             y=y-1
             searchRadius=0
-        elif image[y-1,x-searchRadius] == WHITE:
+        elif image[y-1,x-searchRadius] != BLACK:
             x=x-searchRadius
             y=y-1
             searchRadius=0
         else:
             searchRadius+=1 
             
-    #display the starting location
+    #display the starting location and ending location
     cv2.rectangle(image, (x1 - 2, y1 - 5), (x1 + 2, y1 + 2), 75, -1)
     cv2.rectangle(image, (x - 2, y - 2), (x + 2, y + 2), 175, -1)
     InputOutput.display_image(image,"GoToTop")
@@ -110,21 +164,21 @@ def goToTop(x,y,image):
 #direction is an integer which is 1 for right and -1 or left
 #returns an (x,y) position if found. 
 #returns None otherwise
-def stepDown(image,x,y,direction,max_step_size):
+def stepDown(image,x,y,direction,middle_x,max_step_size):
     #Check bounds. This formula is overly agressive
     if(image.shape[1] > y+1 and image.shape[0] <= x+max_step_size and 0 > x-max_step_size):
         return None
     x_new = x + direction * max_step_size
-    while image[y+1,x_new] == BLACK and abs(x_new - x) <= max_step_size:
+    while image[y+1,x_new] == BLACK and (abs(x_new - x) <= max_step_size or (direction * middle_x < x_new*direction)):
         x_new-=direction
-    if abs(x_new - x) > max_step_size:
+    if abs(x_new - x) > max_step_size and (direction * middle_x >= x_new*direction):
         return None
     else: 
         return (x_new,y+1)
     
 def getBalls(image,sensitivity):
     #Apply the Hough Transform to find the circles
-    circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,2.38, sensitivity) #2.3 is tp be screwed 2.5 is good
+    circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,sensitivity , 5) #2.3 is tp be screwed 2.5 is good
     
     #/// Apply the Hough Transform to find the circles
     if (circles is None):
@@ -148,24 +202,25 @@ def getBalls(image,sensitivity):
 
         count =0 
         for (x, y, r) in circles:
-            #get aravage circle
-            if inImage(output, x, y, r):           
-                count = count+1            
-                Sum_x= Sum_x +x #((ax*count)+x)/(count+1)
-                Sum_y= Sum_y +y #((ay*count)+y)/(count+1)
-                Sum_r= Sum_r + r #((ar*count)+r)/(count+1)
-                #avaragedCircle=
-                
-                circlexList.append(x)
-                circleyList.append(y)
-                circlerList.append(r)
-                tempCirc = (x, y, r)
-                circleList.append(tempCirc)
-                # draw the circle in the output image, then draw a rectangle
-                # corresponding to the center of the circle
-                
-                cv2.circle(output, (x, y), r, (120, 255, 0), 4)
-                cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+            #get average circle
+			if inImage(output,x,y,r):
+				count = count+1            
+				Sum_x= Sum_x +x #((ax*count)+x)/(count+1)
+				Sum_y= Sum_y +y #((ay*count)+y)/(count+1)
+				Sum_r= Sum_r + r #((ar*count)+r)/(count+1)
+				#avaragedCircle=
+				
+				circlexList.append(x)
+				circleyList.append(y)
+				circlerList.append(r)
+				
+				tempCirc = (x, y, r)
+				circleList.append(tempCirc)
+				# draw the circle in the output image, then draw a rectangle
+				# corresponding to the center of the circle
+				
+				cv2.circle(output, (x, y), r, (120, 255, 0), 4)
+				cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
             
         
         centeredCircles = kmean.findAvarages(circleList)
@@ -174,8 +229,9 @@ def getBalls(image,sensitivity):
         radSum =(centerCirc1[2])+(centerCirc2[2])
         distBetween= kmean.getDistBetween(centerCirc1, centerCirc2)
         
-        print "total radius = " + str(radSum)
-        print "distance between = " + str(distBetween)
+        print "centeredCircles: " + str(centeredCircles) 
+        #print "total radius = " + str(radSum)
+        #print "distance between = " + str(distBetween)
         if ( (distBetween - radSum) <0 ): # determins is if there is overlap of the 2 circles
             print "1 ball detected"
             ax = Sum_x/count
@@ -193,28 +249,15 @@ def getBalls(image,sensitivity):
             final_circles = ((ax,ay,ar),)
             
         else:
-            """print "2 balls detected"
+            print "2 balls detected"
+            
             #print both circles
             cv2.circle(output, (centerCirc2[0], centerCirc2[1]), centerCirc2[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc2[0] - 5, centerCirc2[1] - 5), (centerCirc2[0] + 5, centerCirc2[1] + 5), (239, 239, 239), -1)
             cv2.circle(output, (centerCirc1[0], centerCirc1[1]), centerCirc1[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc1[0] - 5, centerCirc1[1] - 5), (centerCirc1[0] + 5, centerCirc1[1] + 5), (239, 239, 239), -1)   
             temp = locationDetection.getDistance2balls(centerCirc1, centerCirc2)
-            locationDetection.getDeg2Circs(centerCirc1, centerCirc2)"""
-            
-            ax = Sum_x/count
-            ay = Sum_y/count
-            ar = Sum_r/count
-            circ = (ax, ay, ar)
-            
-            #print the average circle
-            cv2.circle(output, (ax, ay), ar, (239, 239, 239), 4)
-            cv2.rectangle(output, (ax -5, ay -5), (ax+ 5, ay+5), (239, 239, 239), -1)
-            locationDetection.getDistance(circ)
-            locationDetection.getDeg(circ)
-
-            #return the single average circle            
-            final_circles = ((ax,ay,ar),)
+            locationDetection.getDeg2Circs(centerCirc1, centerCirc2)
             
             #return the two circles            
             final_circles = ((centerCirc1[0], centerCirc1[1],centerCirc1[2]),(centerCirc2[0], centerCirc2[1],centerCirc2[2]))
@@ -259,15 +302,16 @@ def thresholdRed(image):
 #Removes any red noise picked up in image
 def removeNoise(image):
     #kernel = np.ones((9,9),np.uint8)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 3))
+    
+    dilations = 7
     # opening
-    iterate=4
-    image = cv2.erode(image,kernel,iterations = iterate)
-    image = cv2.dilate(image,kernel,iterations = iterate)
+    image = cv2.erode(image,kernel,iterations = dilations)
+    image = cv2.dilate(image,kernel,iterations = dilations)
 
     # closing
-    image = cv2.dilate(image,kernel,iterations = iterate)
-    image = cv2.erode(image,kernel,iterations = iterate)
+    image = cv2.dilate(image,kernel,iterations = dilations)
+    image = cv2.erode(image,kernel,iterations = dilations)
     """
     image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)

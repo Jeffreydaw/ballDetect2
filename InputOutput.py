@@ -11,11 +11,11 @@ import numpy as np
 
 display_images = True
 supress_warnings = False
-display_everything = False
+display_everything = True
 
 #list of images you want displayed
 #displayList = ("Starting Image","Thresholded","houghTransform","Result!","GoToTop","Show Bottom")
-displayList = ("houghTransform","Result!",)
+displayList = ("Starting Image","Result!",)
 
 max_width = 1500
 max_height = 1200
