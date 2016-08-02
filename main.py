@@ -16,7 +16,7 @@ obj_width = 0.305 #meters
 
 if __name__ == '__main__':
       
-    correct_circles = (('OnWater1.jpg',((520,312,100),)),('OnWater3.jpg',((731,416,106),))
+    correct_circles = (('red-boat.jpg',((520,312,100),)),('OnWater3.jpg',((731,416,106),))
         ,('PH2RedBalls.jpg',((519,308,106),(1534,312,106))),('webcamVid1.jpg',((483,413,151),)))
     #correct_c    ircles = (('webcamVid1.jpg',((483,413,151),)),)
     circle_comparisons = []
@@ -83,7 +83,7 @@ if __name__ == '__main__':
      
     #Get average error
     total_xy_error = 0
-    total_radius_error = 0
+    total_radius_error = 0 
     for measured_x, measured_y, measured_radius, calc_x, calc_y, calc_radius in circle_comparisons:
         total_xy_error = total_xy_error + math.sqrt(math.pow((calc_x-measured_x),2)+math.pow((calc_y-measured_y),2))
         total_radius_error = total_radius_error + abs(measured_radius-calc_radius)

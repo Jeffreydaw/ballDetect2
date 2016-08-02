@@ -29,7 +29,7 @@ def inImage(image, x, y, r):
 #returns the image with any felections found removed
 def reflectionDetection(image):
     #first find any ball candidates.
-    sensitivity = 7
+    sensitivity = 10
     initial_ball_locs = getBalls(image,sensitivity)
     if not initial_ball_locs == None:
         for candidate_loc in initial_ball_locs:
@@ -124,7 +124,7 @@ def stepDown(image,x,y,direction,max_step_size):
     
 def getBalls(image,sensitivity):
     #Apply the Hough Transform to find the circles
-    circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,2.3, sensitivity) #2.3 is tp be screwed 2.5 is good
+    circles = cv2.HoughCircles(image,cv2.cv.CV_HOUGH_GRADIENT,2.38, sensitivity) #2.3 is tp be screwed 2.5 is good
     
     #/// Apply the Hough Transform to find the circles
     if (circles is None):
@@ -193,14 +193,28 @@ def getBalls(image,sensitivity):
             final_circles = ((ax,ay,ar),)
             
         else:
-            print "2 balls detected"
+            """print "2 balls detected"
             #print both circles
             cv2.circle(output, (centerCirc2[0], centerCirc2[1]), centerCirc2[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc2[0] - 5, centerCirc2[1] - 5), (centerCirc2[0] + 5, centerCirc2[1] + 5), (239, 239, 239), -1)
             cv2.circle(output, (centerCirc1[0], centerCirc1[1]), centerCirc1[2], (239, 239, 239), 4)
             cv2.rectangle(output, (centerCirc1[0] - 5, centerCirc1[1] - 5), (centerCirc1[0] + 5, centerCirc1[1] + 5), (239, 239, 239), -1)   
             temp = locationDetection.getDistance2balls(centerCirc1, centerCirc2)
-            locationDetection.getDeg2Circs(centerCirc1, centerCirc2)
+            locationDetection.getDeg2Circs(centerCirc1, centerCirc2)"""
+            
+            ax = Sum_x/count
+            ay = Sum_y/count
+            ar = Sum_r/count
+            circ = (ax, ay, ar)
+            
+            #print the average circle
+            cv2.circle(output, (ax, ay), ar, (239, 239, 239), 4)
+            cv2.rectangle(output, (ax -5, ay -5), (ax+ 5, ay+5), (239, 239, 239), -1)
+            locationDetection.getDistance(circ)
+            locationDetection.getDeg(circ)
+
+            #return the single average circle            
+            final_circles = ((ax,ay,ar),)
             
             #return the two circles            
             final_circles = ((centerCirc1[0], centerCirc1[1],centerCirc1[2]),(centerCirc2[0], centerCirc2[1],centerCirc2[2]))
@@ -247,12 +261,13 @@ def removeNoise(image):
     #kernel = np.ones((9,9),np.uint8)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
     # opening
-    image = cv2.erode(image,kernel,iterations = 1)
-    image = cv2.dilate(image,kernel,iterations = 1)
+    iterate=4
+    image = cv2.erode(image,kernel,iterations = iterate)
+    image = cv2.dilate(image,kernel,iterations = iterate)
 
     # closing
-    image = cv2.dilate(image,kernel,iterations = 1)
-    image = cv2.erode(image,kernel,iterations = 1)
+    image = cv2.dilate(image,kernel,iterations = iterate)
+    image = cv2.erode(image,kernel,iterations = iterate)
     """
     image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
